@@ -1,0 +1,12 @@
+FROM node:19-alpine3.16
+
+RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
+WORKDIR /home/node/app
+ADD package.json .
+
+USER node
+ADD --chown=node:node . .
+
+RUN npm install
+
+CMD [ "npm", "run", "dev:watch" ]

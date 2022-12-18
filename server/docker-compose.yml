@@ -1,0 +1,59 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:15.1-alpine
+    container_name: dimatica-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_DB=${DB_NAME}
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/database-seed.sql
+    ports:
+      - '5432:${DB_PORT}'
+    networks:
+      - dimatica-network
+  nodejs:
+    build:
+      context: .
+      dockerfile: DockerfileNode
+    # this is ignored on swarm mode (docker-compose mode)
+    container_name: dimatica-nodejs
+    depends_on:
+      - postgres
+    deploy:
+      replicas: 1 # this may change
+    #restart: unless-stopped
+    environment:
+      - DB_HOST=postgres
+      - DB_PASS=${DB_PASS}
+      - DB_USER=${DB_USER}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
+    ports:
+      - ${PORT}:${PORT}
+      - ${DEBUG_NODE_PORT}:${DEBUG_NODE_PORT}
+    volumes:
+      - .:/home/node/app
+      - dimatica-node_modules:/home/node/app/node_modules
+    networks:
+      - dimatica-network
+  # PostgreSQL pgAdmin panel http://localhost:16543/
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "16543:80"
+    depends_on:
+      - postgres
+    networks:
+      - dimatica-network
+networks:
+  dimatica-network:
+    driver: bridge
+volumes:
+  dimatica-node_modules:

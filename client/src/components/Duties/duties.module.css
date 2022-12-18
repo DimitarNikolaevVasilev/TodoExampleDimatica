@@ -1,0 +1,8 @@
+.deleteIcon{
+    color: red;
+    cursor: pointer;
+    transition: transform .5s;
+}
+.deleteIcon:hover{
+    transform: scale(1.1);
+}
